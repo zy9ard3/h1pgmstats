@@ -25,13 +25,9 @@ git clone https://github.com/zy9ard3/h1pgmstats.git
 ```bash
 pip install flask requests
 ```
-* Change to App directory
-```bash
-cd h1pgmstats
-```
 * Run the application
 ```bash
-python h1pgmstats.py
+python h1pgmstats/h1pgmstats.py
 ```
 * Navigate to http://127.0.0.1:5000
 * For public program stats, just click `Run Unauthenticated`
