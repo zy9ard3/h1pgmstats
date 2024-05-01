@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hackerone Program Stats</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        body {
+            background-color: #1f1f1f;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+
+        form {
+            padding: 10px;
+            background-color: #333333;
+            border: 3px solid #444444;
+            width: 50%;
+            border-radius: 9px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        button {
+            background-color: #777777;
+            color: #ffffff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 4px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #4438ea;
+        }
+
+        textarea {
+            background-color: #2e2e2e;
+            color: #ffffff;
+            border: 3px solid #444444;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            resize: none;
+        }
+
+        label {
+            color: #ffffff;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 30px;
+        }
+    </style>
+    <script>
+        function resizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function validateAuthenticatedForm(event) {
+            const url_auth = document.getElementById("url_auth").value;
+            const csrfToken = document.getElementById("csrf_token").value;
+            const cookie = document.getElementById("cookie").value;
+
+            if (!url_auth || !csrfToken || !cookie) {
+                alert("Handles URL and CSRF Token and Cookie values are required for Authenticated Data.");
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Hackerone Program Stats</h1>
+    <form action="/stats" method="post">
+        <input type="hidden" name="run_type" value="unauthenticated">
+        <button type="submit">Run Unauthenticated</button>
+    </form>
+    <form action="/stats" method="post" onsubmit="validateAuthenticatedForm(event)">
+        <div class="form-group">
+            <label for="url_auth">Handles URL</label>
+            <textarea id="url_auth" name="url_auth" rows="2" oninput="resizeTextarea(this)" placeholder="Paste Your Secret GIST URL for your program handles"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="csrf_token">CSRF Token</label>
+            <textarea id="csrf_token" name="csrf_token" rows="2" oninput="resizeTextarea(this)" placeholder="Paste Your Hackerone CSRF Token here"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="cookie">Cookie</label>
+            <textarea id="cookie" name="cookie" rows="2" oninput="resizeTextarea(this)" placeholder="Paste Your Hackerone Cookies here"></textarea>
+        </div>
+        <input type="hidden" name="run_type" value="authenticated">
+        <button type="submit">Run Authenticated</button>
+    </form>
+</body>
+<br>
+<span style="font-weight: bold;">2024 | Crafted by <a href="https://twitter.com/zy9ard3">zy9ard3</a> ツ</span>
+<br>
+</html>

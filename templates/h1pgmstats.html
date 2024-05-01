@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackerone Program Stats</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #333;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 3000px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #222;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            overflow-x: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+        }
+
+        th {
+            background-color: #444;
+            position: relative;
+            cursor: pointer;    
+        }
+
+        tr:hover {
+            background-color: #555;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .sort-icon {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .sort-icon.asc::after {
+            content: " ▲";
+        }
+
+        .sort-icon.desc::after {
+            content: " ▼";
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Hackerone Program Stats</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th data-index="1" style="width: 15%;">Program<span class="sort-icon"></span></th>
+                <th data-index="2" style="width: 15%;">Program Type<span class="sort-icon"></span></th>
+                <th data-index="3" style="width: 10%;">Bounty Range<span class="sort-icon"></span></th>
+                <th data-index="4" style="width: 10%;">Total Bounties Paid<span class="sort-icon"></span></th>
+                <th data-index="5" style="width: 10%;">Resolved Report Count<span class="sort-icon"></span></th>
+                <th data-index="6" style="width: 10%;">Bounties Paid in Last 90 Days<span class="sort-icon"></span></th>
+                <th data-index="7" style="width: 10%;">Reports Received in Last 90 Days<span class="sort-icon"></span></th>
+                <th data-index="8" style="width: 10%;">Response Efficiency<span class="sort-icon"></span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if data %}
+                {% for entry in data %}
+                    <tr>
+                        <td><a href="{{ entry.url }}">{{ entry.name or '-' }}</a></td>
+                        <td>
+                            {% if entry.type == 'public_mode' %}
+                                Public
+                            {% elif entry.type == 'soft_launched' %}
+                                Private
+                            {% else %}
+                                {{ entry.type or '-' }}
+                            {% endif %}
+                        </td>
+                        <td>{{ entry.bounty_range or '-' }}</td>
+                        <td>{{ entry.total_bounties_paid if entry.total_bounties_paid else '-' }}</td>
+                        <td>{{ entry.resolved_report_count if entry.resolved_report_count else '-' }}</td>
+                        <td>{{ entry.bounties_paid_in_last_90_days if entry.bounties_paid_in_last_90_days else '-' }}</td>
+                        <td>{{ entry.reports_received_in_last_90_days if entry.reports_received_in_last_90_days else '-' }}</td>
+                        <td>{{ (entry.response_efficiency ~ '%') if entry.response_efficiency else '-' }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="8">No data available</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const table = document.getElementById("data-table");
+        const tbody = table.querySelector("tbody");
+
+        table.querySelectorAll("thead th").forEach(headerCell => {
+            headerCell.addEventListener("click", () => {
+                const headerIndex = headerCell.cellIndex;
+                const isAscending = headerCell.classList.contains("asc");
+
+                const sortedRows = Array.from(tbody.querySelectorAll("tr")).sort((a, b) => {
+                    const aValue = a.cells[headerIndex].textContent.trim();
+                    const bValue = b.cells[headerIndex].textContent.trim();
+
+                    function parseValue(value) {
+                        if (value === "-") {
+                            return -Infinity;
+                        } else if (headerIndex === 7) { // Response Efficiency column
+                            return parseFloat(value.replace("%", ""));
+                        } else {
+                            return parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
+                        }
+                    }
+
+                    const parsedA = parseValue(aValue);
+                    const parsedB = parseValue(bValue);
+
+                    return isAscending ? parsedA - parsedB : parsedB - parsedA;
+                });
+
+                headerCell.classList.toggle("asc");
+                headerCell.classList.toggle("desc", !isAscending);
+
+                tbody.innerHTML = "";
+
+                sortedRows.forEach(sortedRow => {
+                    tbody.appendChild(sortedRow);
+                });
+            });
+        });
+
+        const totalBountiesPaidCells = Array.from(document.querySelectorAll("#data-table tbody tr td:nth-child(4)"));
+        totalBountiesPaidCells.forEach(cell => {
+            const value = parseFloat(cell.textContent.trim().replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(value)) {
+                cell.textContent = "$" + value.toLocaleString();
+            }
+        });
+
+        const bountiesPaid90DaysCells = Array.from(document.querySelectorAll("#data-table tbody tr td:nth-child(6)"));
+        bountiesPaid90DaysCells.forEach(cell => {
+            const value = parseFloat(cell.textContent.trim().replace(/[^0-9.-]+/g, ''));
+            if (!isNaN(value)) {
+                cell.textContent = "$" + value.toLocaleString();
+            }
+        });
+    });
+</script>
+</body>
+<center><span style="font-weight: bold;align-items: center;">2024 | Crafted by <a href="https://twitter.com/zy9ard3">zy9ard3</a> ツ</span></center>
+<br>
+</html>
