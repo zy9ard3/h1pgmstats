@@ -85,7 +85,8 @@
                 <th data-index="5" style="width: 10%;">Resolved Report Count<span class="sort-icon"></span></th>
                 <th data-index="6" style="width: 10%;">Bounties Paid in Last 90 Days<span class="sort-icon"></span></th>
                 <th data-index="7" style="width: 10%;">Reports Received in Last 90 Days<span class="sort-icon"></span></th>
-                <th data-index="8" style="width: 10%;">Response Efficiency<span class="sort-icon"></span></th>
+                <th data-index="8" style="width: 10%;">Average Time to Bounty<span class="sort-icon"></span></th>
+                <th data-index="9" style="width: 10%;">Response Efficiency<span class="sort-icon"></span></th>
             </tr>
         </thead>
         <tbody>
@@ -107,6 +108,7 @@
                         <td>{{ entry.resolved_report_count if entry.resolved_report_count else '-' }}</td>
                         <td>{{ entry.bounties_paid_in_last_90_days if entry.bounties_paid_in_last_90_days else '-' }}</td>
                         <td>{{ entry.reports_received_in_last_90_days if entry.reports_received_in_last_90_days else '-' }}</td>
+                        <td data-sort="{{ entry.bounty_time_numeric }}">{{ entry.average_time_to_bounty if entry.average_time_to_bounty else '-'  }}</td>
                         <td>{{ (entry.response_efficiency ~ '%') if entry.response_efficiency else '-' }}</td>
                     </tr>
                 {% endfor %}
@@ -126,33 +128,38 @@
         table.querySelectorAll("thead th").forEach(headerCell => {
             headerCell.addEventListener("click", () => {
                 const headerIndex = headerCell.cellIndex;
+                const dataIndex = headerCell.getAttribute("data-index");
                 const isAscending = headerCell.classList.contains("asc");
 
                 const sortedRows = Array.from(tbody.querySelectorAll("tr")).sort((a, b) => {
-                    const aValue = a.cells[headerIndex].textContent.trim();
-                    const bValue = b.cells[headerIndex].textContent.trim();
+                    const aCell = a.cells[headerIndex];
+                    const bCell = b.cells[headerIndex];
 
-                    function parseValue(value) {
-                        if (value === "-") {
-                            return -Infinity;
-                        } else if (headerIndex === 7) { // Response Efficiency column
-                            return parseFloat(value.replace("%", ""));
+                    let aValue, bValue;
+
+                    if (dataIndex === "8") {
+                        aValue = parseFloat(aCell.getAttribute("data-sort")) || 0;
+                        bValue = parseFloat(bCell.getAttribute("data-sort")) || 0;
+                    } else {
+                        aValue = aCell.textContent.trim();
+                        bValue = bCell.textContent.trim();
+
+                        if (dataIndex === "9") {
+                            aValue = parseFloat(aValue.replace("%", "")) || 0;
+                            bValue = parseFloat(bValue.replace("%", "")) || 0;
                         } else {
-                            return parseFloat(value.replace(/[^0-9.-]+/g, '')) || 0;
+                            aValue = parseFloat(aValue.replace(/[^0-9.-]+/g, '')) || 0;
+                            bValue = parseFloat(bValue.replace(/[^0-9.-]+/g, '')) || 0;
                         }
                     }
 
-                    const parsedA = parseValue(aValue);
-                    const parsedB = parseValue(bValue);
-
-                    return isAscending ? parsedA - parsedB : parsedB - parsedA;
+                    return isAscending ? aValue - bValue : bValue - aValue;
                 });
 
                 headerCell.classList.toggle("asc");
                 headerCell.classList.toggle("desc", !isAscending);
 
                 tbody.innerHTML = "";
-
                 sortedRows.forEach(sortedRow => {
                     tbody.appendChild(sortedRow);
                 });

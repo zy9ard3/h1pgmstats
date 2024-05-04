@@ -123,6 +123,20 @@ fragment ResponseEfficiencyPercentageTeam on Team {
 }
 """
 
+def hours_to_readable_format(hours):
+    if not isinstance(hours, (int, float)) or hours is None:
+        hours = 0
+
+    days = hours // 24
+    remaining_hours = int(hours % 24)
+    months = int(days // 30)
+    days = int(days % 30)
+
+    if months >= 1:
+        return f"{months} months, {days} days"
+    else:
+        return f"{days} days, {remaining_hours} hours"
+
 def fetch_data(handle, headers):
     response = requests.post(GRAPHQL_ENDPOINT, json={'query': GRAPHQL_QUERY, 'variables': {'handle': handle}}, headers=headers)
     if response.status_code == 200:
@@ -132,6 +146,15 @@ def fetch_data(handle, headers):
             if team_data:
                 low = team_data.get("average_bounty_lower_amount", "0")
                 high = team_data.get("top_bounty_upper_amount", "0")
+
+                bounty_time = team_data.get("most_recent_sla_snapshot", {}).get("bounty_time", 0)
+                if not isinstance(bounty_time, (int, float)):
+                    bounty_time = 0
+                
+                if bounty_time == 0.0:
+                    average_time_to_bounty = "-"
+                else:
+                    average_time_to_bounty = hours_to_readable_format(bounty_time)
 
                 low = str(low) if low is not None else "0"
                 high = str(high) if high is not None else "0"
@@ -146,6 +169,8 @@ def fetch_data(handle, headers):
                     'resolved_report_count': team_data.get("resolved_report_count", 0),
                     'bounties_paid_in_last_90_days': team_data.get("formatted_bounties_paid_last_90_days", 0),
                     'reports_received_in_last_90_days': team_data.get("reports_received_last_90_days", 0),
+                    'average_time_to_bounty' : average_time_to_bounty,
+                    'bounty_time_numeric': bounty_time,
                     'response_efficiency': team_data.get("response_efficiency_percentage", 0)
                 }
                 return extracted_data
